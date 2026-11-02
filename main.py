@@ -22,7 +22,7 @@ BANNER = r"""
  | | | || |/ __| __| |/ _` | __|
  | |_| || | (__| |_| | (_| | |_ 
  |____/ |_|\___|\__|_|\__,_|\__|
-   [^Shift+D it]  (Ctrl + Shift + D)   
+   [Ctrl + Alt + D]  Dictate It   
 """
 
 def run_self_test(engine: DictationEngine):
@@ -120,7 +120,7 @@ def main():
 
     print(f"\n=======================================================")
     print(f" D^it is active in the background & System Tray!")
-    print(f" Hotkey:     {config.hotkey.upper()} (^⇧D)")
+    print(f" Hotkey:     {config.hotkey.upper()} (Conflict-free global dictation)")
     print(f" Mode:       {config.mode.upper()} ({'Press once to start/stop' if config.mode == 'toggle' else 'Hold to speak'})")
     print(f" Model:      Whisper '{config.model_name}' on {engine.transcriber.device.upper()} ({engine.transcriber.compute_type})")
     print(f" Paste:      {config.paste_mode.upper()} (Direct target window injection)")

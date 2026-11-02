@@ -27,13 +27,16 @@ class HotkeyListener:
             self.engine.start_dictation()
 
     def _setup_toggle_mode(self):
-        print(f"[Hotkey] Listening for global toggle hotkey: {self.hotkey_str.upper()} (^⇧D)")
-        keyboard.add_hotkey(self.hotkey_str, self._on_toggle, suppress=False)
+        print(f"[Hotkey] Listening for global toggle hotkey: {self.hotkey_str.upper()}")
+        try:
+            keyboard.add_hotkey(self.hotkey_str, self._on_toggle, suppress=False)
+        except Exception as e:
+            print(f"[Hotkey] Error registering toggle hotkey '{self.hotkey_str}': {e}")
 
     def _setup_ptt_mode(self):
         print(f"[Hotkey] Listening for Push-To-Talk hotkey: Hold {self.hotkey_str.upper()} to speak, release to paste.")
         
-        # Parse trigger key (usually last key in hotkey combo, e.g. 'd')
+        # Parse trigger key (e.g. 'd' from 'ctrl+alt+d', or 'f8')
         parts = [p.strip() for p in self.hotkey_str.split("+")]
         main_key = parts[-1]
         modifier_keys = parts[:-1]
@@ -42,8 +45,8 @@ class HotkeyListener:
             if event.name.lower() != main_key:
                 return
 
-            # Check if all modifiers are pressed
-            mods_pressed = all(keyboard.is_pressed(mod) for mod in modifier_keys)
+            # Check if all modifiers are pressed (if none, mods_pressed is True)
+            mods_pressed = all(keyboard.is_pressed(mod) for mod in modifier_keys) if modifier_keys else True
 
             if event.event_type == keyboard.KEY_DOWN:
                 if mods_pressed and not self._is_held:
@@ -54,7 +57,17 @@ class HotkeyListener:
                     self._is_held = False
                     self.engine.stop_dictation()
 
-        keyboard.hook(_on_key_event)
+        try:
+            keyboard.hook(_on_key_event)
+        except Exception as e:
+            print(f"[Hotkey] Error registering PTT hook for '{self.hotkey_str}': {e}")
+
+    def update_hotkey(self, new_hotkey_str: str):
+        with self._lock:
+            self.stop()
+            self.hotkey_str = new_hotkey_str.lower()
+            self.config.hotkey = self.hotkey_str
+            self.start()
 
     def start(self):
         if self.mode == "ptt":
@@ -67,4 +80,3 @@ class HotkeyListener:
             keyboard.unhook_all()
         except Exception:
             pass
-

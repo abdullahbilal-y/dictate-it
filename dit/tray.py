@@ -2,6 +2,7 @@ import threading
 import time
 from PIL import Image, ImageDraw
 import pystray
+from .config import save_config
 
 def create_circle_icon(color: tuple, accent_symbol: str = "mic"):
     width, height = 64, 64
@@ -26,6 +27,14 @@ def create_circle_icon(color: tuple, accent_symbol: str = "mic"):
 
     return image
 
+HOTKEY_PRESETS = [
+    ("Ctrl + Alt + D (Recommended - Conflict Free)", "ctrl+alt+d"),
+    ("Ctrl + Alt + Space (Thumb Friendly)", "ctrl+alt+space"),
+    ("F8 (Single Key)", "f8"),
+    ("Alt + \\ (Symbol Key)", "alt+\\"),
+    ("Ctrl + Shift + D (Legacy)", "ctrl+shift+d"),
+]
+
 class SystemTrayApp:
     def __init__(self, engine, config):
         self.engine = engine
@@ -37,7 +46,7 @@ class SystemTrayApp:
 
         self.tray = None
         self._thread = None
-        self.status_text = "Ready (^Shift+D)"
+        self.status_text = f"Ready ({self.config.hotkey.upper()})"
 
     def _build_menu(self):
         def _toggle_dictation(icon, item):
@@ -53,12 +62,24 @@ class SystemTrayApp:
                     self.engine.listener.stop()
                     self.engine.listener.mode = mode_val
                     self.engine.listener.start()
+                save_config(self.config)
+                self._refresh_menu()
+            return handler
+
+        def _set_hotkey(hotkey_val):
+            def handler(icon, item):
+                self.config.hotkey = hotkey_val
+                if self.engine.listener:
+                    self.engine.listener.update_hotkey(hotkey_val)
+                save_config(self.config)
+                self.set_idle()
                 self._refresh_menu()
             return handler
 
         def _toggle_cues(icon, item):
             self.config.audio_cues = not self.config.audio_cues
             self.engine.feedback.enabled = self.config.audio_cues
+            save_config(self.config)
             self._refresh_menu()
 
         def _quit_app(icon, item):
@@ -66,23 +87,35 @@ class SystemTrayApp:
                 self.engine.listener.stop()
             self.tray.stop()
 
+        # Build Hotkey Submenu
+        hotkey_menu_items = [
+            pystray.MenuItem(
+                label,
+                _set_hotkey(key_code),
+                checked=lambda item, kc=key_code: self.config.hotkey.lower() == kc.lower()
+            )
+            for label, key_code in HOTKEY_PRESETS
+        ]
+        hotkey_submenu = pystray.Menu(*hotkey_menu_items)
+
         menu_items = [
             pystray.MenuItem("D^it - Dictate It", None, enabled=False),
             pystray.MenuItem(lambda text: f"Status: {self.status_text}", None, enabled=False),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(
-                "🎙️ Start / Stop Dictation (^Shift+D)",
+                lambda text: f"🎙️ Start / Stop Dictation ({self.config.hotkey.upper()})",
                 _toggle_dictation,
                 default=True
             ),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Shortcut Key", hotkey_submenu),
             pystray.MenuItem(
-                "Mode: Toggle",
+                "Mode: Toggle (Press to start/stop)",
                 _set_mode("toggle"),
                 checked=lambda item: self.config.mode == "toggle"
             ),
             pystray.MenuItem(
-                "Mode: Push-to-Talk",
+                "Mode: Push-to-Talk (Hold while speaking)",
                 _set_mode("ptt"),
                 checked=lambda item: self.config.mode == "ptt"
             ),
@@ -101,7 +134,7 @@ class SystemTrayApp:
             self.tray.menu = self._build_menu()
 
     def set_idle(self):
-        self.status_text = "Ready (^Shift+D)"
+        self.status_text = f"Ready ({self.config.hotkey.upper()})"
         if self.tray:
             self.tray.icon = self.icon_idle
             self.tray.title = f"D^it: {self.status_text}"

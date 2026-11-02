@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 
 @dataclass
 class Config:
-    hotkey: str = "ctrl+shift+d"
+    hotkey: str = "ctrl+alt+d"        # Conflict-free: does not collide with Chrome bookmark or IDE shortcuts
     mode: str = "toggle"              # "toggle" (press to start, press to stop) or "ptt" (hold)
     model_name: str = "small"         # "small", "tiny", "base", "medium"
     device: str = "auto"              # "auto", "cuda", "cpu"

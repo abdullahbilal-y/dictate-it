@@ -42,3 +42,9 @@ The key page. Non-obvious traps in this repo, each capturing the WHY. Add an ent
 **Why:** Multi-stage pipeline (record -> preprocess -> faster-whisper STT -> clipboard/paste).
 **Do:** Log exact per-turn timing breakdown: `[Timing] Audio: 2.10s | STT: 0.09s (CUDA float16) | Inject: 0.05s | Total: 2.24s`.
 **Refs:** `dit/engine.py`, [../lessons/instrument-stages-before-optimizing.md](../lessons/instrument-stages-before-optimizing.md)
+
+## 7. Ctrl+Shift+D collides with browser and IDE standard shortcuts — verified
+**What:** Pressing `Ctrl+Shift+D` opens "Bookmark all tabs" in Chrome / Edge, opens Run & Debug view in VS Code, or duplicates lines in Sublime Text.
+**Why:** `Ctrl+Shift+D` is heavily claimed by major applications.
+**Do:** Use `Ctrl+Alt+D` (or `Ctrl+Alt+Space` / `F8`) which is universally unassigned across Chrome, VS Code, Office, and Windows. Provide 1-click preset switching in the tray menu.
+**Refs:** `dit/config.py`, `dit/tray.py`, `dit/hotkey.py`

@@ -1,4 +1,4 @@
-# Architecture: D^it
+Can it work here to go?I think we need a better keystroke key shortcut key because this is used to control 50s used by a lot of things something that's not been used at all and that's free like on Google Chrome or the IDE using this key is making it hard# Architecture: D^it
 
 ```
 User (Global Hotkey: Ctrl+Shift+D)
