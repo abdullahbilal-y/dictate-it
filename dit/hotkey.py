@@ -67,3 +67,4 @@ class HotkeyListener:
             keyboard.unhook_all()
         except Exception:
             pass
+

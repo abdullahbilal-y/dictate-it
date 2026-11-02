@@ -66,3 +66,4 @@ class AudioRecorder:
         if audio is None or len(audio) == 0:
             return 0.0
         return float(np.sqrt(np.mean(np.square(audio))))
+

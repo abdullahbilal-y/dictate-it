@@ -10,3 +10,4 @@ When modifying code:
 - Maintain instrumentation: preserve stage timing logs.
 - Fail loud: do not silently swallow exceptions in audio capture or model initialization.
 - Test with real runtime execution (`python main.py --test`), not just syntax check.
+

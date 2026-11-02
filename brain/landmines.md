@@ -7,35 +7,38 @@ The key page. Non-obvious traps in this repo, each capturing the WHY. Add an ent
 ## 1. Fast text injection via simulated typing can miss chars or trigger hotkeys — verified
 **What:** Typing long transcribed strings via individual synthetic keystrokes (`keyboard.write` or `pynput`) can drop characters, take seconds to type, or accidentally trigger editor hotkeys if modifier keys are still pressed.
 **Why:** Synthetic keydown/keyup events rely on the target application's message pump processing each character sequentially at system speed.
-**Do:** Use the clipboard + `Ctrl+V` paste pattern: backup previous clipboard, write transcribed text to clipboard, simulate `Ctrl+V` (ensuring modifier keys are released first), wait a tiny debounce (50ms), then optionally restore the previous clipboard.
+**Do:** Use the clipboard + `Ctrl+V` paste pattern: backup previous clipboard, write transcribed text to clipboard, simulate `Ctrl+V` (ensuring modifier keys are released first), wait a tiny debounce (50ms).
 **Refs:** `dit/injector.py`
 
 ## 2. Windows hotkey modifiers sticking on release — verified
 **What:** When using `Ctrl+Shift+D` to trigger dictation, synthetic `Ctrl+V` pasting might see `Shift` or `Ctrl` still held down by the user, resulting in `Ctrl+Shift+V` or corrupted keystrokes.
 **Why:** The global hotkey triggers while physical keys are pressed down. If text injection happens immediately upon release, OS key state may lag.
-**Do:** Wait briefly (e.g. 50-100ms) or explicitly simulate releasing modifiers before triggering `Ctrl+V`.
+**Do:** Call native `keybd_event(VK, 0, KEYEVENTF_KEYUP, 0)` for `Shift`, `Ctrl`, `Alt`, and `Win` before dispatching `Ctrl+V`.
 **Refs:** `dit/hotkey.py`, `dit/injector.py`
 
-## 3. If audio capture or VAD fails, fail loud — inherited — verify applies
-**What:** Dictation utility sits quietly in the background without transcribing, making user think their mic or whisper is broken.
-**Why:** VAD or sound device stream exceptions swallowed in background threads lead to silent death.
-**Do:** Play distinct auditory feedback cues (high pitch beep on start, descending chime on success, low error double-buzz on failure/silence) and log clear error output.
-**Refs:** `dit/audio.py`, `dit/feedback.py`, [../lessons/one-vad-fail-loud.md](../lessons/one-vad-fail-loud.md)
+## 3. Popups/overlays stealing foreground focus from target window — verified
+**What:** User presses hotkey in Notepad/VS Code/browser, speaks, but nothing gets pasted into the text field.
+**Why:** Showing an on-screen GUI indicator or notification window transfers Windows foreground focus away from the target editor. When `Ctrl+V` fires, it pastes into nothing.
+**Do:**
+1. Capture `target_hwnd = user32.GetForegroundWindow()` at the exact moment dictation starts.
+2. Call `user32.SetForegroundWindow(target_hwnd)` right before pasting.
+3. If using any GUI window, set `WS_EX_NOACTIVATE` (0x08000000) so the OS never shifts keyboard focus.
+**Refs:** `dit/engine.py`, `dit/injector.py`, `dit/overlay.py`
 
-## 4. Endpointing silence is a fixed tax on every turn — inherited — verify applies
-**What:** Auto-stop / VAD dictation feels sluggish if silence duration is too long.
-**Why:** The VAD end-of-speech silence wait is added to every utterance before Whisper STT even starts.
-**Do:** Default to hotkey-controlled toggle/push-to-talk (instant stop on hotkey release/toggle), and when using VAD, tune silence threshold (e.g. 600-800ms) with pre-buffering.
-**Refs:** `dit/recorder.py`, [../lessons/endpointing-is-a-fixed-latency-tax.md](../lessons/endpointing-is-a-fixed-latency-tax.md)
+## 4. Setting artificial RMS silence thresholds lower than mic sensitivity — verified
+**What:** User speaks clearly into microphone, but dictation discards the entire audio chunk as "silence".
+**Why:** Many desktop USB/headset microphones output RMS levels around 0.0007–0.002 during normal speech. A hardcoded threshold like 0.003 silently drops all utterances.
+**Do:** Keep RMS cutoff near zero (e.g. 0.00005) only to drop absolute hardware dead-silence, and let Whisper's built-in Silero neural VAD (`vad_filter=True`) accurately detect speech.
+**Refs:** `dit/engine.py`, `dit/config.py`
 
-## 5. Instrument every stage before optimizing — inherited — verify applies
+## 5. Restoring clipboard before target application finishes reading it — verified
+**What:** Text isn't pasted, or previous clipboard contents get pasted instead of dictated text.
+**Why:** Target applications process Windows `WM_PASTE` messages asynchronously. If clipboard restoration runs after only 200–300ms, the app reads the restored clipboard instead of the dictated text.
+**Do:** Leave dictated text in the clipboard by default (`restore_clipboard=False`), allowing the user to also re-paste manually if desired.
+**Refs:** `dit/injector.py`, `dit/config.py`
+
+## 6. Instrument every stage before optimizing — inherited — verify applies
 **What:** Guessing whether latency comes from mic buffer, Whisper model, or text injection.
 **Why:** Multi-stage pipeline (record -> preprocess -> faster-whisper STT -> clipboard/paste).
-**Do:** Log exact per-turn timing breakdown: `[Timing] Audio: 2.10s | Transcribe: 0.28s (CUDA float16) | Inject: 0.04s | Total: 2.42s`.
+**Do:** Log exact per-turn timing breakdown: `[Timing] Audio: 2.10s | STT: 0.09s (CUDA float16) | Inject: 0.05s | Total: 2.24s`.
 **Refs:** `dit/engine.py`, [../lessons/instrument-stages-before-optimizing.md](../lessons/instrument-stages-before-optimizing.md)
-
-## 6. Whisper hallucination on silence or background noise — verified
-**What:** Whisper generates repetitive phrases ("Thank you", "Subtitles by...", etc.) on empty or whisper-quiet audio.
-**Why:** Sequence-to-sequence autoregressive models hallucinate text when fed pure silence or low SNR noise.
-**Do:** Filter audio with an RMS energy threshold or Whisper's `no_speech_prob` (> 0.6) before attempting to paste text.
-**Refs:** `dit/transcriber.py`

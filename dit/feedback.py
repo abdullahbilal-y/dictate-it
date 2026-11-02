@@ -48,3 +48,4 @@ class FeedbackManager:
     def error(self):
         """Low buzz indicating an issue."""
         self._async_beep([(250, 150)])
+

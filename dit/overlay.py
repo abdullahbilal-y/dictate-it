@@ -2,10 +2,16 @@ import threading
 import queue
 import time
 import tkinter as tk
+import ctypes
+
+GWL_EXSTYLE = -20
+WS_EX_NOACTIVATE = 0x08000000
+WS_EX_TOOLWINDOW = 0x00000080
+WS_EX_TOPMOST = 0x00000008
 
 class StatusOverlay:
-    """Non-blocking floating status badge that shows recording and transcription state."""
-    def __init__(self, enabled: bool = True):
+    """Non-blocking floating status badge with WS_EX_NOACTIVATE so focus is NEVER stolen."""
+    def __init__(self, enabled: bool = False):
         self.enabled = enabled
         self._cmd_queue = queue.Queue()
         self._thread = None
@@ -25,7 +31,7 @@ class StatusOverlay:
 
             # Center top of screen
             screen_width = root.winfo_screenwidth()
-            w, h = 220, 42
+            w, h = 220, 40
             x = (screen_width - w) // 2
             y = 35
             root.geometry(f"{w}x{h}+{x}+{y}")
@@ -33,11 +39,25 @@ class StatusOverlay:
             self.label = tk.Label(
                 root,
                 text="",
-                font=("Segoe UI", 11, "bold"),
+                font=("Segoe UI", 10, "bold"),
                 bg="#1e1e2e",
                 fg="#ffffff"
             )
             self.label.pack(expand=True, fill="both")
+
+            # Apply Windows WS_EX_NOACTIVATE flag so window NEVER steals keyboard focus
+            root.update()
+            try:
+                hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
+                ex_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                ctypes.windll.user32.SetWindowLongW(
+                    hwnd,
+                    GWL_EXSTYLE,
+                    ex_style | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST
+                )
+            except Exception:
+                pass
+
             root.withdraw()
 
             def _poll():
@@ -48,7 +68,6 @@ class StatusOverlay:
                             text, color = arg
                             self.label.config(text=text, fg=color)
                             root.deiconify()
-                            root.lift()
                         elif cmd == "hide":
                             root.withdraw()
                 except Exception:
@@ -75,9 +94,8 @@ class StatusOverlay:
             return
         display = "✓  Dictated"
         self._cmd_queue.put(("show", (display, "#50fa7b")))
-        # Auto hide after 1.2s
         def _delay_hide():
-            time.sleep(1.2)
+            time.sleep(1.0)
             self.hide()
         threading.Thread(target=_delay_hide, daemon=True).start()
 

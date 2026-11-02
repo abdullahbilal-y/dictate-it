@@ -86,3 +86,4 @@ class Transcriber:
 
         full_text = " ".join(texts).strip()
         return full_text
+

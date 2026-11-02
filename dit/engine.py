@@ -25,11 +25,20 @@ class DictationEngine:
             restore_delay_ms=config.restore_delay_ms
         )
         
+        self.tray = None
+        self.listener = None
         self.is_listening = False
         self._turn_count = 0
         self._epoch = 0
         self._start_time = 0.0
+        self._target_hwnd = None
         self._lock = threading.Lock()
+
+    def set_tray(self, tray):
+        self.tray = tray
+
+    def set_listener(self, listener):
+        self.listener = listener
 
     def start_dictation(self):
         with self._lock:
@@ -39,11 +48,15 @@ class DictationEngine:
             self._epoch += 1
             self._start_time = time.time()
             self._turn_count += 1
+            # Capture the currently focused application window right when user presses hotkey
+            self._target_hwnd = self.injector.get_foreground_window()
             current_epoch = self._epoch
 
-        print(f"\n[D^it Turn #{self._turn_count}] 🎙️ Listening... (Speak now)")
+        print(f"\n[D^it Turn #{self._turn_count}] 🎙️ Listening... (target window hwnd: {self._target_hwnd})")
         self.feedback.start_recording()
         self.overlay.show_recording()
+        if self.tray:
+            self.tray.set_recording()
         
         try:
             self.recorder.start()
@@ -51,6 +64,8 @@ class DictationEngine:
             print(f"[D^it] Mic error: {e}")
             self.feedback.error()
             self.overlay.hide()
+            if self.tray:
+                self.tray.set_idle()
             with self._lock:
                 self.is_listening = False
 
@@ -60,19 +75,22 @@ class DictationEngine:
                 return
             self.is_listening = False
             current_epoch = self._epoch
+            target_hwnd = self._target_hwnd
             duration_audio = time.time() - self._start_time
 
         self.feedback.end_recording()
         self.overlay.show_transcribing()
+        if self.tray:
+            self.tray.set_transcribing()
         
-        # Process transcription in background thread so hotkey hook doesn't lag
+        # Process transcription asynchronously so hotkey hook never hangs
         threading.Thread(
             target=self._process_utterance,
-            args=(current_epoch, duration_audio),
+            args=(current_epoch, target_hwnd, duration_audio),
             daemon=True
         ).start()
 
-    def _process_utterance(self, epoch: int, expected_duration: float):
+    def _process_utterance(self, epoch: int, target_hwnd, expected_duration: float):
         t_capture_start = time.time()
         audio = self.recorder.stop()
         t_capture_end = time.time()
@@ -86,13 +104,15 @@ class DictationEngine:
         audio_len_s = len(audio) / self.config.samplerate if len(audio) > 0 else 0.0
         rms = self.recorder.calculate_rms(audio)
 
-        if audio_len_s < 0.25 or rms < self.config.energy_threshold:
-            print(f"[D^it Turn #{self._turn_count}] Discarded: Silence (Len: {audio_len_s:.2f}s, RMS: {rms:.4f})")
+        if audio_len_s < 0.2 or rms == 0.0:
+            print(f"[D^it Turn #{self._turn_count}] Discarded: Empty/too short (Len: {audio_len_s:.2f}s, RMS: {rms:.6f})")
             self.feedback.empty_or_silence()
             self.overlay.hide()
+            if self.tray:
+                self.tray.set_idle()
             return
 
-        print(f"[D^it Turn #{self._turn_count}] ⚡ Transcribing {audio_len_s:.2f}s audio (RMS: {rms:.4f})...")
+        print(f"[D^it Turn #{self._turn_count}] ⚡ Transcribing {audio_len_s:.2f}s audio (RMS: {rms:.6f})...")
         t_stt_start = time.time()
         try:
             text = self.transcriber.transcribe(
@@ -104,6 +124,8 @@ class DictationEngine:
             print(f"[D^it Turn #{self._turn_count}] Transcription error: {e}")
             self.feedback.error()
             self.overlay.hide()
+            if self.tray:
+                self.tray.set_idle()
             return
         t_stt_end = time.time()
 
@@ -113,18 +135,22 @@ class DictationEngine:
                 return
 
         if not text:
-            print(f"[D^it Turn #{self._turn_count}] No recognizable speech.")
+            print(f"[D^it Turn #{self._turn_count}] No recognizable speech (silence or filtered).")
             self.feedback.empty_or_silence()
             self.overlay.hide()
+            if self.tray:
+                self.tray.set_idle()
             return
 
-        # Injection
+        # Text Injection directly into target window
         t_inj_start = time.time()
-        self.injector.inject(text)
+        self.injector.inject(text, target_hwnd=target_hwnd)
         t_inj_end = time.time()
 
         self.feedback.transcribed()
         self.overlay.show_success(text)
+        if self.tray:
+            self.tray.set_idle()
 
         # Telemetry & Structured Logging (lessons: instrument-stages-before-optimizing)
         stt_dur = t_stt_end - t_stt_start
