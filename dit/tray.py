@@ -107,7 +107,7 @@ class SystemTrayApp:
         hotkey_submenu = pystray.Menu(*hotkey_menu_items)
 
         menu_items = [
-            pystray.MenuItem("D^it - Dictate It", None, enabled=False),
+            pystray.MenuItem("DictateIt", None, enabled=False),
             pystray.MenuItem(lambda text: f"Status: {self.status_text}", None, enabled=False),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(
@@ -138,7 +138,7 @@ class SystemTrayApp:
                 checked=lambda item: is_startup_enabled()
             ),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Exit D^it", _quit_app)
+            pystray.MenuItem("Exit DictateIt", _quit_app)
         ]
         return pystray.Menu(*menu_items)
 
@@ -150,25 +150,25 @@ class SystemTrayApp:
         self.status_text = f"Ready ({self.config.hotkey.upper()})"
         if self.tray:
             self.tray.icon = self.icon_idle
-            self.tray.title = f"D^it: {self.status_text}"
+            self.tray.title = f"DictateIt: {self.status_text}"
 
     def set_recording(self):
         self.status_text = "Listening... Speak now"
         if self.tray:
             self.tray.icon = self.icon_rec
-            self.tray.title = f"D^it: {self.status_text}"
+            self.tray.title = f"DictateIt: {self.status_text}"
 
     def set_transcribing(self):
         self.status_text = "Transcribing with Whisper..."
         if self.tray:
             self.tray.icon = self.icon_busy
-            self.tray.title = f"D^it: {self.status_text}"
+            self.tray.title = f"DictateIt: {self.status_text}"
 
     def start(self):
         self.tray = pystray.Icon(
-            "DitTray",
+            "DictateItTray",
             self.icon_idle,
-            f"D^it: {self.status_text}",
+            f"DictateIt: {self.status_text}",
             self._build_menu()
         )
         self._thread = threading.Thread(target=self.tray.run, daemon=True)

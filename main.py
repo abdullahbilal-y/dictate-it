@@ -17,17 +17,16 @@ from dit.tray import SystemTrayApp
 from dit.startup import enable_startup, disable_startup
 
 BANNER = r"""
-  ____   _      _   _     _ _   
- |  _ \ (_)    | | (_)   | | |  
- | | | | _  ___| |_ _  __| | |_ 
- | | | || |/ __| __| |/ _` | __|
- | |_| || | (__| |_| | (_| | |_ 
- |____/ |_|\___|\__|_|\__,_|\__|
-   [Ctrl + Alt + D]  Dictate It   
+  ____  _      _        _       ___ _   
+ |  _ \(_) ___| |_ __ _| |_ ___|_ _| |_ 
+ | | | | |/ __| __/ _` | __/ _ \| || __|
+ | |_| | | (__| || (_| | ||  __/| || |_ 
+ |____/|_|\___|\__\__,_|\__\___|___|\__|
+   [Ctrl + Alt + D]  Global Whisper Dictation   
 """
 
 def run_self_test(engine: DictationEngine):
-    print("\n--- Running D^it Verification & Self-Test ---")
+    print("\n--- Running DictateIt Verification & Self-Test ---")
     import numpy as np
 
     # Test 1: Whisper Transcriber Test
@@ -59,21 +58,21 @@ def run_self_test(engine: DictationEngine):
     engine.feedback.transcribed()
     time.sleep(0.15)
     print("  ✓ Sound cues verified.")
-    print("--- Self-Test Complete! D^it is fully operational. ---\n")
+    print("--- Self-Test Complete! DictateIt is fully operational. ---\n")
 
 def main():
-    parser = argparse.ArgumentParser(description="D^it (^⇧D it) - Local Whisper Dictation for Windows")
-    parser.add_argument("--hotkey", type=str, default=None, help="Global hotkey (e.g. 'ctrl+shift+d')")
+    parser = argparse.ArgumentParser(description="DictateIt - Ultra-Fast Local Whisper Voice Dictation for Windows")
+    parser.add_argument("--hotkey", type=str, default=None, help="Global hotkey (e.g. 'ctrl+alt+d')")
     parser.add_argument("--mode", type=str, choices=["toggle", "ptt"], default=None, help="Dictation mode: 'toggle' or 'ptt'")
-    parser.add_argument("--model", type=str, default=None, help="Whisper model ('small', 'tiny', 'base')")
+    parser.add_argument("--model", type=str, default=None, help="Whisper model ('small', 'tiny', 'base', 'medium')")
     parser.add_argument("--device", type=str, choices=["auto", "cuda", "cpu"], default=None, help="Inference device")
     parser.add_argument("--paste-mode", type=str, choices=["clipboard", "type"], default=None, help="Text injection method")
     parser.add_argument("--no-cues", action="store_true", help="Disable audio feedback beeps")
     parser.add_argument("--no-tray", action="store_true", help="Disable system tray icon")
     parser.add_argument("--overlay", action="store_true", help="Enable floating visual badge")
     parser.add_argument("--save-config", action="store_true", help="Save current settings to config.json")
-    parser.add_argument("--enable-startup", action="store_true", help="Add D^it to Windows Startup")
-    parser.add_argument("--disable-startup", action="store_true", help="Remove D^it from Windows Startup")
+    parser.add_argument("--enable-startup", action="store_true", help="Add DictateIt to Windows Startup")
+    parser.add_argument("--disable-startup", action="store_true", help="Remove DictateIt from Windows Startup")
     parser.add_argument("--test", action="store_true", help="Run self-test diagnostic and exit")
 
     args = parser.parse_args()
@@ -109,7 +108,7 @@ def main():
         print("[Config] Settings saved to config.json")
 
     print(BANNER)
-    print("Initializing D^it Dictation Engine...")
+    print("Initializing DictateIt Engine...")
     engine = DictationEngine(config)
 
     if args.test:
@@ -129,28 +128,27 @@ def main():
         print("[Tray] Icon loaded in Windows system tray (notification area).")
 
     print(f"\n=======================================================")
-    print(f" D^it is active in the background & System Tray!")
+    print(f" DictateIt is active in the background & System Tray!")
     print(f" Hotkey:     {config.hotkey.upper()} (Conflict-free global dictation)")
     print(f" Mode:       {config.mode.upper()} ({'Press once to start/stop' if config.mode == 'toggle' else 'Hold to speak'})")
     print(f" Model:      Whisper '{config.model_name}' on {engine.transcriber.device.upper()} ({engine.transcriber.compute_type})")
     print(f" Paste:      {config.paste_mode.upper()} (Direct target window injection)")
     print(f" Icon Tray:  {'Enabled (check taskbar near clock)' if config.tray_enabled else 'Disabled'}")
-    print(f" Exit:       Right-click tray icon -> 'Exit D^it' or press Ctrl+C")
+    print(f" Exit:       Right-click tray icon -> 'Exit DictateIt' or press Ctrl+C")
     print(f"=======================================================\n")
 
     try:
-        # If tray app is active, wait until tray stops or ctrl+c
         while True:
             time.sleep(0.5)
             if tray_app and tray_app.tray and not tray_app.tray.visible:
                 break
     except KeyboardInterrupt:
-        print("\nStopping D^it...")
+        print("\nStopping DictateIt...")
     finally:
         listener.stop()
         if tray_app:
             tray_app.stop()
-        print("D^it stopped cleanly.")
+        print("DictateIt stopped cleanly.")
 
 if __name__ == "__main__":
     main()

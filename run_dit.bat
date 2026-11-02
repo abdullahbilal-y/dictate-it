@@ -1,6 +1,6 @@
 @echo off
-title D^it - Dictate It (Ctrl+Alt+D)
+title DictateIt (Ctrl+Alt+D)
 cd /d "%~dp0"
-echo Starting D^it in System Tray...
+echo Starting DictateIt...
 python main.py
 pause
