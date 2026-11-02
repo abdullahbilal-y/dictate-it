@@ -8,94 +8,56 @@ Whenever you press **`Ctrl + Shift + D`** (`^⇧D`), D^it captures your voice, t
 
 ## ⚡ Features
 
-- **Global Hotkey:** `Ctrl+Shift+D` triggers dictation from anywhere in Windows.
-- **Sub-Second Local STT:** Runs Whisper entirely on your GPU (CUDA `float16`) using the cached local models (`small` or `tiny`). No API keys, no monthly fees, and 100% private.
+- **System Icon Tray Support:** Runs quietly in your Windows taskbar tray (near the clock). Right-click the icon to toggle modes, trigger dictation, or exit.
+- **Dynamic Tray States:**
+  - 🔵 Blue mic: Idle & ready
+  - 🔴 Red circle: Actively recording your voice
+  - 🟠 Orange star: Transcribing with Whisper
+- **Focus-Locked Injection:** Automatically captures the active window handle before recording and restores focus right before sending native Windows `Ctrl+V`.
+- **Sub-Second Local STT:** Runs Whisper entirely on your GPU (CUDA `float16`) using cached local models (`small` or `tiny`). No API keys, no monthly fees, and 100% private.
 - **Two Trigger Modes:**
   - **Toggle Mode (Default):** Press `Ctrl+Shift+D` once to start speaking; press it again to finish and paste.
   - **Push-to-Talk (PTT):** Hold `Ctrl+Shift+D` while speaking; release to finish and paste.
-- **Instant Text Injection:** Uses Windows clipboard + simulated `Ctrl+V` with modifier clearance and automatic previous-clipboard restoration.
 - **Auditory Cues:** Non-blocking pleasant chimes (rising chirp when recording starts, descending confirmation chime when text is injected, low double-chime if silence/no speech is heard).
-- **Floating Status Badge:** Minimalist semi-transparent on-screen pill indicator (`🎙️ Listening`, `⚡ Transcribing`, `✓ Dictated`).
-- **Telemetry & Logging:** Real-time per-turn stage breakdown (audio duration, STT latency, injection latency).
 
 ---
 
-## 🚀 Quick Start
+## 🚀 How to Run
 
-### 1. Launch D^it
-Double-click `run_dit.bat`, or run from terminal:
+### Option 1: Run in System Tray (Silent Background)
+Double-click [**`run_silent_tray.vbs`**](file:///c:/Projects/D%5Eit/run_silent_tray.vbs).
+It starts D^it directly in your Windows Icon Tray without keeping a console window open!
+
+### Option 2: Run with Terminal Console
+Double-click [**`run_dit.bat`**](file:///c:/Projects/D%5Eit/run_dit.bat) or run from PowerShell:
 
 ```powershell
 python main.py
 ```
 
-### 2. Dictate Anywhere
+---
+
+## 🎙️ How to Dictate
 1. Click into any text field or editor (e.g. Notepad, VS Code, Google Chrome).
-2. Press **`Ctrl + Shift + D`**.
-3. Hear the rising chirp and speak your message.
+2. Press **`Ctrl + Shift + D`** (hear the chirp, tray icon turns red).
+3. Speak naturally.
 4. Press **`Ctrl + Shift + D`** again (or release if using PTT).
-5. Hear the confirmation chime and watch your text instantly appear!
+5. Hear the confirmation chime and watch your text appear instantly in your editor!
 
 ---
 
-## 🛠️ CLI Options & Configuration
-
-You can customize hotkey, model, mode, and behavior directly:
+## 🛠️ CLI Options
 
 ```powershell
-# Run with Push-to-Talk (hold hotkey to speak, release to paste)
+# Run with Push-to-Talk mode (hold hotkey to speak, release to paste)
 python main.py --mode ptt
 
-# Use ultra-fast 'tiny' model (~75ms latency)
+# Use ultra-fast 'tiny' model (~75ms)
 python main.py --model tiny
 
 # Change the global hotkey
 python main.py --hotkey "ctrl+space"
 
-# Disable sound cues or GUI overlay
-python main.py --no-cues --no-overlay
-
-# Save current CLI flags to config.json as permanent defaults
-python main.py --mode toggle --model small --save-config
-
 # Run diagnostic self-test
 python main.py --test
 ```
-
-### Configuration File (`config.json`)
-Settings can also be modified in `config.json`:
-```json
-{
-  "hotkey": "ctrl+shift+d",
-  "mode": "toggle",
-  "model_name": "small",
-  "device": "auto",
-  "compute_type": "auto",
-  "paste_mode": "clipboard",
-  "restore_clipboard": true,
-  "restore_delay_ms": 250,
-  "audio_cues": true,
-  "gui_overlay": true,
-  "samplerate": 16000,
-  "language": "en",
-  "beam_size": 1,
-  "energy_threshold": 0.003
-}
-```
-
----
-
-## 🧠 Project Architecture & Playbooks
-
-D^it was built following the lessons in [ai-playbooks](brain/landmines.md):
-- **Stage Timing Telemetry:** Logs audio length, STT inference, and injection latency per turn.
-- **Fail Loud:** Auditory and console alarms on mic or model errors rather than silent failure.
-- **Modifier Clearance:** Avoids sticking Ctrl/Shift hotkey modifiers during automated paste.
-- **Hallucination Guard:** Discards silence and repetitive autoregressive tokens.
-
-For architectural details, check the `brain/` directory:
-- [brain/system-overview.md](brain/system-overview.md)
-- [brain/architecture.md](brain/architecture.md)
-- [brain/landmines.md](brain/landmines.md)
-- [brain/operations.md](brain/operations.md)
-
