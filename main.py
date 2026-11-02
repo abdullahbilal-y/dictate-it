@@ -14,6 +14,7 @@ from dit.config import load_config, save_config, Config
 from dit.engine import DictationEngine
 from dit.hotkey import HotkeyListener
 from dit.tray import SystemTrayApp
+from dit.startup import enable_startup, disable_startup
 
 BANNER = r"""
   ____   _      _   _     _ _   
@@ -71,9 +72,18 @@ def main():
     parser.add_argument("--no-tray", action="store_true", help="Disable system tray icon")
     parser.add_argument("--overlay", action="store_true", help="Enable floating visual badge")
     parser.add_argument("--save-config", action="store_true", help="Save current settings to config.json")
+    parser.add_argument("--enable-startup", action="store_true", help="Add D^it to Windows Startup")
+    parser.add_argument("--disable-startup", action="store_true", help="Remove D^it from Windows Startup")
     parser.add_argument("--test", action="store_true", help="Run self-test diagnostic and exit")
 
     args = parser.parse_args()
+
+    if args.enable_startup:
+        enable_startup()
+        return
+    if args.disable_startup:
+        disable_startup()
+        return
 
     config = load_config()
 

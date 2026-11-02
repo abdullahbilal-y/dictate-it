@@ -38,6 +38,16 @@ python main.py
 
 ---
 
+## 🔄 Start Automatically with Windows
+
+To have D^it run automatically in the background when you turn on your computer:
+
+- **Method A (Easiest):** Right-click the D^it tray icon and check **Start with Windows**.
+- **Method B (1-Click):** Double-click [**`add_to_startup.bat`**](file:///c:/Projects/D%5Eit/add_to_startup.bat) (or run `remove_from_startup.bat` to undo).
+- **Method C (CLI):** Run `python main.py --enable-startup`.
+
+---
+
 ## ⌨️ Shortcut Key Presets
 
 Right-click the icon in your system tray and choose **Shortcut Key** to switch between presets instantly:

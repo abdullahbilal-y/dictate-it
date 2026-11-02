@@ -3,6 +3,7 @@ import time
 from PIL import Image, ImageDraw
 import pystray
 from .config import save_config
+from .startup import is_startup_enabled, enable_startup, disable_startup
 
 def create_circle_icon(color: tuple, accent_symbol: str = "mic"):
     width, height = 64, 64
@@ -82,6 +83,13 @@ class SystemTrayApp:
             save_config(self.config)
             self._refresh_menu()
 
+        def _toggle_startup(icon, item):
+            if is_startup_enabled():
+                disable_startup()
+            else:
+                enable_startup()
+            self._refresh_menu()
+
         def _quit_app(icon, item):
             if self.engine.listener:
                 self.engine.listener.stop()
@@ -123,6 +131,11 @@ class SystemTrayApp:
                 "Sound Cues",
                 _toggle_cues,
                 checked=lambda item: self.config.audio_cues
+            ),
+            pystray.MenuItem(
+                "Start with Windows",
+                _toggle_startup,
+                checked=lambda item: is_startup_enabled()
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Exit D^it", _quit_app)
