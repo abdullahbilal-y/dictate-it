@@ -59,12 +59,12 @@ pip install -r requirements.txt
 
 ### 3. Launch DictateIt
 
-#### Option A: Silent in System Tray (Recommended)
-Double-click **`run_silent_tray.vbs`**.  
-DictateIt will launch directly into your taskbar tray (near the clock) with no terminal window.
+#### Option A: Silent in System Tray (No Terminal Window)
+Double-click [**`start_tray.bat`**](start_tray.bat).  
+DictateIt will start immediately in your Windows notification tray (near the clock) with zero command prompt window.
 
 #### Option B: Terminal Console (With Live Telemetry)
-Double-click **`run_dit.bat`** or run:
+Double-click [**`run_dit.bat`**](run_dit.bat) or run from PowerShell:
 ```powershell
 python main.py
 ```
