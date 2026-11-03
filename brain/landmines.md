@@ -48,3 +48,9 @@ The key page. Non-obvious traps in this repo, each capturing the WHY. Add an ent
 **Why:** `Ctrl+Shift+D` is heavily claimed by major applications.
 **Do:** Use `Ctrl+Alt+D` (or `Ctrl+Alt+Space` / `F8`) which is universally unassigned across Chrome, VS Code, Office, and Windows. Provide 1-click preset switching in the tray menu.
 **Refs:** `dit/config.py`, `dit/tray.py`, `dit/hotkey.py`
+
+## 8. Windows Script Host / VBScript errors on Windows Startup — verified
+**What:** On Windows boot, a Windows Script Host popup error appeared ("Can not find script file...").
+**Why:** An earlier shortcut script escaped quotes with backticks inside a single-quoted PowerShell string, baking literal backticks into the shortcut argument path. Furthermore, routing startup through `wscript.exe` is fragile and depends on deprecated VBScript subsystem.
+**Do:** Point the Windows Startup shortcut (`DictateIt.lnk`) directly to `pythonw.exe` with arguments `main.py` and `WorkingDirectory` set to the project root. `pythonw.exe` natively launches headless with zero console window and completely bypasses Windows Script Host.
+**Refs:** `dit/startup.py`
