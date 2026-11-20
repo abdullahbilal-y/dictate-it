@@ -7,6 +7,7 @@ class AudioRecorder:
         self.samplerate = samplerate
         self.frames = []
         self.is_recording = False
+        self.level = 0.0   # smoothed RMS of recent blocks, drives the listening card's live bars
         self._stream = None
         self._lock = threading.Lock()
 
@@ -16,7 +17,13 @@ class AudioRecorder:
             pass
         if self.is_recording:
             # Flatten to 1D and copy
-            self.frames.append(indata.flatten().copy())
+            block = indata.flatten().copy()
+            self.frames.append(block)
+            rms = float(np.sqrt(np.mean(np.square(block)))) if len(block) else 0.0
+            self.level = rms if rms > self.level else self.level * 0.7 + rms * 0.3
+
+    def current_level(self) -> float:
+        return self.level if self.is_recording else 0.0
 
     def start(self, device=None):
         with self._lock:

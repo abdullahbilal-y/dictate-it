@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-start "" pythonw.exe main.py
+if exist "bin\DictateIt.exe" (start "" "bin\DictateIt.exe" main.py) else (start "" pythonw.exe main.py)
 exit

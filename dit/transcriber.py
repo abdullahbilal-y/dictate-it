@@ -1,6 +1,12 @@
 import os
 import re
 import numpy as np
+
+# The HuggingFace "xet" download path left 0-byte .incomplete files and hung startup at "Loading Whisper"
+# for days on this machine (landmine #9). The plain HTTP path downloaded fine. Must be set before import.
+os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+
 from faster_whisper import WhisperModel
 import ctranslate2
 
@@ -53,8 +59,9 @@ class Transcriber:
 
         return device, compute_type
 
-    def transcribe(self, audio: np.ndarray, language: str = "en", beam_size: int = 1) -> str:
-        """Transcribe 16kHz float32 audio array and return cleaned text."""
+    def transcribe(self, audio: np.ndarray, language: str = "en", beam_size: int = 1, hotwords: str = None) -> str:
+        """Transcribe 16kHz float32 audio array and return cleaned text.
+        hotwords: names/terms to bias spelling toward (task titles, custom vocabulary)."""
         if audio is None or len(audio) == 0:
             return ""
 
@@ -65,7 +72,8 @@ class Transcriber:
             beam_size=beam_size,
             vad_filter=True,
             vad_parameters=dict(min_silence_duration_ms=400),
-            condition_on_previous_text=False
+            condition_on_previous_text=False,
+            hotwords=hotwords or None,
         )
 
         texts = []

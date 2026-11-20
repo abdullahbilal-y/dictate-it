@@ -9,4 +9,4 @@ Start with [landmines.md](landmines.md) (the most valuable page), then:
 - [operations.md](operations.md) — how to build, run, test, deploy, observe.
 - [glossary.md](glossary.md) — project/domain terms.
 
-TODO: replace this line with a one-paragraph description of the project.
+D^it (DictateIt) is a local-first Windows tray app: global-hotkey Whisper dictation, plus voice task capture with animated top-right cards and a window-title context watcher that links your work to tasks and helps you resume after interruptions.

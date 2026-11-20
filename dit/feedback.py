@@ -45,6 +45,22 @@ class FeedbackManager:
         """Low double-tap indicating silence/no speech heard."""
         self._async_beep([(350, 40), 0.05, (300, 40)])
 
+    def task_queued(self):
+        """Bright rising triad: something new is safely in the queue."""
+        self._async_beep([(660, 40), (880, 40), (1320, 70)])
+
+    def task_done(self):
+        """Resolving fifth: finished."""
+        self._async_beep([(784, 55), (1175, 110)])
+
+    def task_removed(self):
+        """Soft falling pair: taken off the list."""
+        self._async_beep([(587, 45), (440, 70)])
+
+    def nudge(self):
+        """Single quiet tick: a question is waiting, no urgency."""
+        self._async_beep([(1047, 30)])
+
     def error(self):
         """Low buzz indicating an issue."""
         self._async_beep([(250, 150)])
